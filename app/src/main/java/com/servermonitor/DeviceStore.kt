@@ -10,6 +10,7 @@ data class Device(
     val ip: String,
     val port: Int = 5050,
     val token: String,
+    val mac: String = "",                      // MAC address for Wake-on-LAN (optional)
     var lastStatus: String = "unknown",
     // Post-shutdown script: script name on the AOD to run after shutdown
     val postShutdownScript: String = "",       // script name (empty = none)
@@ -43,6 +44,7 @@ object DeviceStore {
                 ip = o.getString("ip"),
                 port = o.optInt("port", 5050),
                 token = o.getString("token"),
+                mac = o.optString("mac", ""),
                 lastStatus = o.optString("lastStatus", "unknown"),
                 postShutdownScript = o.optString("postShutdownScript", ""),
                 postShutdownDelaySeconds = o.optInt("postShutdownDelaySeconds", 30)
@@ -55,7 +57,8 @@ object DeviceStore {
         devices.forEach { d ->
             arr.put(JSONObject().apply {
                 put("id", d.id); put("name", d.name); put("ip", d.ip)
-                put("port", d.port); put("token", d.token); put("lastStatus", d.lastStatus)
+                put("port", d.port); put("token", d.token); put("mac", d.mac)
+                put("lastStatus", d.lastStatus)
                 put("postShutdownScript", d.postShutdownScript)
                 put("postShutdownDelaySeconds", d.postShutdownDelaySeconds)
             })

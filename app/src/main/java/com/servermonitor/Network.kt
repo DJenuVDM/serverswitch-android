@@ -42,37 +42,43 @@ object Network {
         client.newCall(req).execute().isSuccessful
     } catch (e: Exception) { false }
 
-    fun getInfo(device: Device): ServerInfo? = try {
-        val req = Request.Builder().url("http://${device.ip}:${device.port}/info")
-            .addHeader("X-Token", device.token).build()
-        val resp = client.newCall(req).execute()
-        if (!resp.isSuccessful) null else {
-            val j = JSONObject(resp.body?.string() ?: return null)
-            if (j.has("error")) null else ServerInfo(
-                j.getDouble("cpu_percent"), j.getDouble("ram_percent"),
-                j.getDouble("ram_used_gb"), j.getDouble("ram_total_gb"),
-                j.getDouble("disk_percent"), j.getDouble("disk_used_gb"),
-                j.getDouble("disk_total_gb"), j.getLong("uptime_seconds")
-            )
-        }
-    } catch (e: Exception) { null }
+    fun getInfo(device: Device): ServerInfo? {
+        return try {
+            val req = Request.Builder().url("http://${device.ip}:${device.port}/info")
+                .addHeader("X-Token", device.token).build()
+            val resp = client.newCall(req).execute()
+            if (!resp.isSuccessful) null else {
+                val j = JSONObject(resp.body?.string() ?: return null)
+                if (j.has("error")) null else ServerInfo(
+                    j.getDouble("cpu_percent"), j.getDouble("ram_percent"),
+                    j.getDouble("ram_used_gb"), j.getDouble("ram_total_gb"),
+                    j.getDouble("disk_percent"), j.getDouble("disk_used_gb"),
+                    j.getDouble("disk_total_gb"), j.getLong("uptime_seconds")
+                )
+            }
+        } catch (e: Exception) { null }
+    }
 
     // ── AOD ───────────────────────────────────────────────────────────────────
-    fun pollAod(aod: Aod): String = try {
-        val req = Request.Builder().url("http://${aod.ip}:${aod.port}/ping").build()
-        val resp = client.newCall(req).execute()
-        if (resp.isSuccessful) "on" else "off"
-    } catch (e: Exception) { "off" }
+    fun pollAod(aod: Aod): String {
+        return try {
+            val req = Request.Builder().url("http://${aod.ip}:${aod.port}/ping").build()
+            val resp = client.newCall(req).execute()
+            if (resp.isSuccessful) "on" else "off"
+        } catch (e: Exception) { "off" }
+    }
 
-    fun wakeViaWol(aod: Aod, mac: String): Boolean = try {
-        val body = JSONObject().apply {
-            put("mac", mac)
-            put("broadcast", aod.broadcast)
-        }.toString().toRequestBody("application/json".toMediaType())
-        val req = Request.Builder().url("http://${aod.ip}:${aod.port}/wake/wol")
-            .post(body).addHeader("X-Token", aod.token).build()
-        client.newCall(req).execute().isSuccessful
-    } catch (e: Exception) { false }
+    fun wakeViaWol(aod: Aod, mac: String): Boolean {
+        return try {
+            val body = JSONObject().apply {
+                put("mac", mac)
+                put("broadcast", aod.broadcast)
+            }.toString().toRequestBody("application/json".toMediaType())
+            val req = Request.Builder().url("http://${aod.ip}:${aod.port}/wake/wol")
+                .post(body).addHeader("X-Token", aod.token).build()
+            client.newCall(req).execute().isSuccessful
+        } catch (e: Exception) { false }
+    }
 
     fun wakeViaScript(aod: Aod, scriptName: String): Boolean = try {
         val req = Request.Builder()

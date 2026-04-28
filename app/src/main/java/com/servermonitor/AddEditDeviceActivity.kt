@@ -4,6 +4,7 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.Gravity
+import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import kotlin.concurrent.thread
@@ -55,9 +56,11 @@ class AddEditDeviceActivity : AppCompatActivity() {
         }
 
         addLabel("Device name")
-        val nameField = addField("e.g. JenuServer", existing?.name ?: "")
+        val nameField = addField("e.g. Server", existing?.name ?: "")
         addLabel("IP address (Tailscale)")
-        val ipField = addField("e.g. 100.80.46.6", existing?.ip ?: "")
+        val ipField = addField(" TailscaleIP", existing?.ip ?: "")
+        addLabel("MAC address (optional, for Wake-on-LAN)")
+        val macField = addField("aa:bb:cc:dd:ee:ff", existing?.mac ?: "")
         addLabel("Port")
         val portField = addField("5050", (existing?.port ?: 5050).toString(), numeric = true)
         addLabel("Auth token")
@@ -78,7 +81,7 @@ class AddEditDeviceActivity : AppCompatActivity() {
         })
         container.addView(TextView(this).apply {
             text = "Run a script on the always-on device after this server shuts down. " +
-                   "Useful for things like cutting smart plug power after shutdown completes."
+                    "Useful for things like cutting smart plug power after shutdown completes."
             textSize = 12f; setTextColor(Color.parseColor("#333344")); setPadding(0, 0, 0, 24)
         })
 
@@ -126,7 +129,7 @@ class AddEditDeviceActivity : AppCompatActivity() {
         )
         container.addView(TextView(this).apply {
             text = "How long to wait after triggering shutdown before the script runs. " +
-                   "Give the server enough time to actually power off (usually 15–60s)."
+                    "Give the server enough time to actually power off (usually 15–60s)."
             textSize = 11f; setTextColor(Color.parseColor("#2A2A3E")); setPadding(0, 4, 0, 0)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
@@ -147,6 +150,7 @@ class AddEditDeviceActivity : AppCompatActivity() {
             setOnClickListener {
                 val name = nameField.text.toString().trim()
                 val ip = ipField.text.toString().trim()
+                val mac = macField.text.toString().trim()
                 val port = portField.text.toString().toIntOrNull() ?: 5050
                 val token = tokenField.text.toString().trim()
                 val script = scriptField.text.toString().trim()
@@ -161,12 +165,12 @@ class AddEditDeviceActivity : AppCompatActivity() {
                 if (existing != null) {
                     val idx = devices.indexOfFirst { it.id == editingId }
                     if (idx >= 0) devices[idx] = devices[idx].copy(
-                        name = name, ip = ip, port = port, token = token,
+                        name = name, ip = ip, mac = mac, port = port, token = token,
                         postShutdownScript = script, postShutdownDelaySeconds = delay
                     )
                 } else {
                     devices.add(Device(
-                        id = DeviceStore.newId(), name = name, ip = ip,
+                        id = DeviceStore.newId(), name = name, ip = ip, mac = mac,
                         port = port, token = token,
                         postShutdownScript = script, postShutdownDelaySeconds = delay
                     ))

@@ -134,13 +134,19 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        container.addView(TextView(this).apply {
+        val addBtn = TextView(this).apply {
             text = "+ ADD DEVICE"
-            textSize = 14f; setTextColor(Color.parseColor("#7B7BFF"))
-            gravity = Gravity.CENTER; setPadding(0, 48, 0, 0)
-            isClickable = true; isFocusable = true
-            setOnClickListener { startActivity(Intent(this@MainActivity, AddEditDeviceActivity::class.java)) }
-        })
+            textSize = 14f
+            setTextColor(Color.parseColor("#7B7BFF"))
+            gravity = Gravity.CENTER
+            setPadding(0, 48, 0, 0)
+            isClickable = true
+            isFocusable = true
+            setOnClickListener {
+                startActivity(Intent(this@MainActivity, AddEditDeviceActivity::class.java))
+            }
+        }
+        container.addView(addBtn)
 
         swipe.setOnRefreshListener {
             thread {
@@ -152,19 +158,21 @@ class MainActivity : AppCompatActivity() {
                     val s = Network.pollAod(a)
                     DeviceStore.updateAodStatus(this, a.id, s)
                 }
-                runOnUiThread { swipe.isRefreshing = false; switchTab("devices") }
+                runOnUiThread { swipe.isRefreshing = false; switchTab(currentTab) }
             }
         }
 
         scroll.addView(container)
         swipe.addView(scroll)
 
-        // Auto-poll on load
-        thread {
-            devices.forEach { d -> DeviceStore.updateDeviceStatus(this, d.id, Network.pollDevice(d)) }
-            aods.forEach { a -> DeviceStore.updateAodStatus(this, a.id, Network.pollAod(a)) }
-            runOnUiThread { switchTab("devices") }
-        }
+//        // Auto-poll on load
+//        thread {
+//            devices.forEach { d -> DeviceStore.updateDeviceStatus(this, d.id, Network.pollDevice(d)) }
+//            aods.forEach { a -> DeviceStore.updateAodStatus(this, a.id, Network.pollAod(a)) }
+//            runOnUiThread {
+//                if (currentTab == "devices") switchTab("devices")
+//            }
+//        }
 
         return swipe
     }
@@ -291,9 +299,9 @@ class MainActivity : AppCompatActivity() {
                     AlertDialog.Builder(this).setTitle("${device.name} — Info")
                         .setMessage(
                             "CPU:    ${info.cpuPercent}%\n" +
-                            "RAM:    ${info.ramPercent}% (${info.ramUsedGb}/${info.ramTotalGb} GB)\n" +
-                            "Disk:   ${info.diskPercent}% (${info.diskUsedGb}/${info.diskTotalGb} GB)\n" +
-                            "Uptime: ${formatUptime(info.uptimeSeconds)}"
+                                    "RAM:    ${info.ramPercent}% (${info.ramUsedGb}/${info.ramTotalGb} GB)\n" +
+                                    "Disk:   ${info.diskPercent}% (${info.diskUsedGb}/${info.diskTotalGb} GB)\n" +
+                                    "Uptime: ${formatUptime(info.uptimeSeconds)}"
                         ).setPositiveButton("OK", null).show()
                 }
             }
@@ -308,11 +316,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showWakeDialog(device: Device, aod: Aod) {
-        val options = mutableListOf("Wake-on-LAN (enter MAC address)")
         var scripts = emptyList<String>()
         thread {
             scripts = Network.listScripts(aod)
-            val items = (listOf("Wake-on-LAN (enter MAC)") + scripts.map { "Script: $it" }).toTypedArray()
+            val items = (listOf("Wake-on-LAN (MAC: ${if (device.mac.isNotEmpty()) device.mac else "not set"})") +
+                    scripts.map { "Script: $it" }).toTypedArray()
             runOnUiThread {
                 AlertDialog.Builder(this)
                     .setTitle("Power on ${device.name}")
@@ -334,23 +342,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showWolDialog(device: Device, aod: Aod) {
-        val input = EditText(this).apply {
-            hint = "aa:bb:cc:dd:ee:ff"
-            setHintTextColor(Color.parseColor("#444455"))
-            setTextColor(Color.parseColor("#F0F0F5"))
-            setPadding(48, 32, 48, 32)
+        if (device.mac.isEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle("No MAC address saved")
+                .setMessage("To use Wake-on-LAN, edit ${device.name} and enter its MAC address first.")
+                .setPositiveButton("Edit device") { _, _ ->
+                    startActivity(Intent(this, AddEditDeviceActivity::class.java).apply {
+                        putExtra("device_id", device.id)
+                    })
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+            return
         }
         AlertDialog.Builder(this)
-            .setTitle("MAC address for ${device.name}")
-            .setMessage("Enter the MAC address of ${device.name}'s network card.")
-            .setView(input)
+            .setTitle("Wake ${device.name} via WoL?")
+            .setMessage("Sending magic packet to MAC: ${device.mac}")
             .setPositiveButton("Wake") { _, _ ->
-                val mac = input.text.toString().trim()
-                if (mac.isEmpty()) return@setPositiveButton
                 thread {
-                    val ok = Network.wakeViaWol(aod, mac)
+                    val ok = Network.wakeViaWol(aod, device.mac)
                     runOnUiThread {
-                        Toast.makeText(this, if (ok) "WoL sent to $mac!" else "WoL failed", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, if (ok) "WoL sent to ${device.mac}!" else "WoL failed", Toast.LENGTH_SHORT).show()
                     }
                 }
             }.setNegativeButton("Cancel", null).show()
@@ -358,6 +370,10 @@ class MainActivity : AppCompatActivity() {
 
     // ── NETWORKS TAB ──────────────────────────────────────────────────────────
     private fun buildNetworksTab(): View {
+        val swipe = SwipeRefreshLayout(this).apply {
+            setColorSchemeColors(Color.parseColor("#7B7BFF"))
+            setBackgroundColor(Color.parseColor("#0A0A0F"))
+        }
         val scroll = ScrollView(this).apply { setBackgroundColor(Color.parseColor("#0A0A0F")) }
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(48, 32, 48, 80)
@@ -383,8 +399,19 @@ class MainActivity : AppCompatActivity() {
             setOnClickListener { startActivity(Intent(this@MainActivity, AddEditAodActivity::class.java)) }
         })
 
+        swipe.setOnRefreshListener {
+            thread {
+                aods.forEach { a ->
+                    val s = Network.pollAod(a)
+                    DeviceStore.updateAodStatus(this, a.id, s)
+                }
+                runOnUiThread { swipe.isRefreshing = false; switchTab(currentTab) }
+            }
+        }
+
         scroll.addView(container)
-        return scroll
+        swipe.addView(scroll)
+        return swipe
     }
 
     private fun makeAodCard(aod: Aod): View {
@@ -426,7 +453,7 @@ class MainActivity : AppCompatActivity() {
         val allDevices = DeviceStore.getDevices(this)
         val linkedDevices = allDevices.filter { aod.deviceIds.contains(it.id) }
         val deviceNames = if (linkedDevices.isEmpty()) "No devices assigned"
-            else linkedDevices.joinToString(", ") { it.name }
+        else linkedDevices.joinToString(", ") { it.name }
         card.addView(TextView(this).apply {
             text = deviceNames
             textSize = 11f; setTextColor(Color.parseColor("#444455")); setPadding(40, 4, 0, 24)
