@@ -309,9 +309,10 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        val screenLogsBtn = makeBtn("SCREEN LOGS", "#7B7BFF") {
+        var screenLogsBtn: TextView? = null
+        screenLogsBtn = makeBtn("SCREEN LOGS", "#7B7BFF") {
             if (device.lastStatus != "on") { Toast.makeText(this, "Offline", Toast.LENGTH_SHORT).show(); return@makeBtn }
-            showScreenSelector(device, screenLogsBtn)
+            screenLogsBtn?.let { showScreenSelector(device, it) }
         }
         btnRow.addView(screenLogsBtn)
 
