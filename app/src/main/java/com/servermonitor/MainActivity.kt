@@ -308,6 +308,11 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+        btnRow.addView(makeBtn("SCREEN LOGS", "#7B7BFF") {
+            if (device.lastStatus != "on") { Toast.makeText(this, "Offline", Toast.LENGTH_SHORT).show(); return@makeBtn }
+            showScreenSelector(device)
+        })
+
         btnRow.addView(makeBtn("EDIT", "#555566") {
             startActivity(Intent(this, AddEditDeviceActivity::class.java).apply { putExtra("device_id", device.id) })
         })
@@ -485,6 +490,71 @@ class MainActivity : AppCompatActivity() {
             setPadding(0, 8, 32, 8)
             isClickable = true; isFocusable = true
             setOnClickListener { onClick() }
+        }
+    }
+
+    private fun showScreenSelector(device: Device) {
+        thread {
+            val screens = Network.listScreens(device)
+            runOnUiThread {
+                if (screens.isEmpty()) {
+                    showScreenNameDialog(device, "")
+                } else {
+                    val items = screens.map { it.substringAfter('.', it) }.toTypedArray()
+                    AlertDialog.Builder(this)
+                        .setTitle("Select an active screen")
+                        .setItems(items) { _, which -> showScreenLog(device, screens[which]) }
+                        .setPositiveButton("Enter name") { _, _ -> showScreenNameDialog(device, "") }
+                        .setNegativeButton("Cancel", null)
+                        .show()
+                }
+            }
+        }
+    }
+
+    private fun showScreenNameDialog(device: Device, prefill: String) {
+        val input = EditText(this).apply {
+            setText(prefill)
+            hint = "screen name"
+            setTextColor(Color.parseColor("#F0F0F5"))
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Enter screen name")
+            .setView(input)
+            .setPositiveButton("Show logs") { _, _ ->
+                val screenName = input.text.toString().trim()
+                if (screenName.isEmpty()) {
+                    Toast.makeText(this, "Enter a screen name", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                showScreenLog(device, screenName)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showScreenLog(device: Device, screenName: String) {
+        thread {
+            val logText = Network.getScreenLog(device, screenName)
+            runOnUiThread {
+                if (logText == null) {
+                    Toast.makeText(this, "Screen not found or log unavailable", Toast.LENGTH_LONG).show()
+                    return@runOnUiThread
+                }
+                val logView = TextView(this).apply {
+                    text = logText
+                    textSize = 12f
+                    setTextColor(Color.parseColor("#F0F0F5"))
+                    setPadding(24, 24, 24, 24)
+                    setTextIsSelectable(true)
+                }
+                val scroll = ScrollView(this).apply { addView(logView) }
+                AlertDialog.Builder(this)
+                    .setTitle("Logs: $screenName")
+                    .setView(scroll)
+                    .setPositiveButton("Close", null)
+                    .show()
+            }
         }
     }
 

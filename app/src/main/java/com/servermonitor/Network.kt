@@ -7,6 +7,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
 data class ServerInfo(
@@ -57,6 +58,42 @@ object Network {
                 )
             }
         } catch (e: Exception) { null }
+    }
+
+    fun listScreens(device: Device): List<String> {
+        return try {
+            val req = Request.Builder()
+                .url("http://${device.ip}:${device.port}/screens")
+                .addHeader("X-Token", device.token)
+                .build()
+            val resp = client.newCall(req).execute()
+            if (!resp.isSuccessful) return emptyList()
+            val j = JSONObject(resp.body?.string() ?: return emptyList())
+            if (j.has("screens")) {
+                val arr = j.getJSONArray("screens")
+                (0 until arr.length()).map { arr.getString(it) }
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    fun getScreenLog(device: Device, screenName: String): String? {
+        return try {
+            val encodedName = URLEncoder.encode(screenName, "UTF-8")
+            val req = Request.Builder()
+                .url("http://${device.ip}:${device.port}/screens/$encodedName/log")
+                .addHeader("X-Token", device.token)
+                .build()
+            val resp = client.newCall(req).execute()
+            if (!resp.isSuccessful) return null
+            val j = JSONObject(resp.body?.string() ?: return null)
+            if (j.has("error")) null else j.optString("log", "")
+        } catch (e: Exception) {
+            null
+        }
     }
 
     // ── AOD ───────────────────────────────────────────────────────────────────
