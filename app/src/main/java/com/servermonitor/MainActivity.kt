@@ -227,7 +227,11 @@ class MainActivity : AppCompatActivity() {
             card.addView(View(this).apply { layoutParams = LinearLayout.LayoutParams(0, 24) })
         }
 
-        // Buttons
+        card.isClickable = true
+        card.isFocusable = true
+        card.setOnClickListener { showDeviceActions(device, aod) }
+
+        // Main action buttons
         val btnRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; setPadding(40, 0, 0, 0)
         }
@@ -290,34 +294,6 @@ class MainActivity : AppCompatActivity() {
                         runOnUiThread { switchTab("devices") }
                     }
                 }.setNegativeButton("Cancel", null).show()
-        })
-
-        btnRow.addView(makeBtn("INFO", "#7B7BFF") {
-            if (device.lastStatus != "on") { Toast.makeText(this, "Offline", Toast.LENGTH_SHORT).show(); return@makeBtn }
-            thread {
-                val info = Network.getInfo(device)
-                runOnUiThread {
-                    if (info == null) { Toast.makeText(this, "Could not fetch info", Toast.LENGTH_SHORT).show(); return@runOnUiThread }
-                    AlertDialog.Builder(this).setTitle("${device.name} — Info")
-                        .setMessage(
-                            "CPU:    ${info.cpuPercent}%\n" +
-                                    "RAM:    ${info.ramPercent}% (${info.ramUsedGb}/${info.ramTotalGb} GB)\n" +
-                                    "Disk:   ${info.diskPercent}% (${info.diskUsedGb}/${info.diskTotalGb} GB)\n" +
-                                    "Uptime: ${formatUptime(info.uptimeSeconds)}"
-                        ).setPositiveButton("OK", null).show()
-                }
-            }
-        })
-
-        var screenLogsBtn: TextView? = null
-        screenLogsBtn = makeBtn("SCREEN LOGS", "#7B7BFF") {
-            if (device.lastStatus != "on") { Toast.makeText(this, "Offline", Toast.LENGTH_SHORT).show(); return@makeBtn }
-            screenLogsBtn?.let { showScreenSelector(device, it) }
-        }
-        btnRow.addView(screenLogsBtn)
-
-        btnRow.addView(makeBtn("EDIT", "#555566") {
-            startActivity(Intent(this, AddEditDeviceActivity::class.java).apply { putExtra("device_id", device.id) })
         })
 
         card.addView(btnRow)
@@ -504,18 +480,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showScreenSelector(device: Device, button: TextView) {
-        val originalText = button.text.toString()
-        button.isEnabled = false
-        button.alpha = 0.6f
-        button.text = "Loading..."
+    private fun showScreenSelector(device: Device, button: TextView?) {
+        val originalText = button?.text?.toString()
+        button?.apply {
+            isEnabled = false
+            alpha = 0.6f
+            text = "Loading..."
+        }
 
         thread {
             val screens = Network.listScreens(device)
             runOnUiThread {
-                button.isEnabled = true
-                button.alpha = 1f
-                button.text = originalText
+                button?.apply {
+                    isEnabled = true
+                    alpha = 1f
+                    text = originalText
+                }
 
                 if (screens.isEmpty()) {
                     showScreenNameDialog(device, "", button)
@@ -588,6 +568,20 @@ class MainActivity : AppCompatActivity() {
                     .show()
             }
         }
+    }
+
+    private fun showDeviceActions(device: Device, aod: Aod?) {
+        val actions = mutableListOf("Screen logs", "Edit device")
+        AlertDialog.Builder(this)
+            .setTitle(device.name)
+            .setItems(actions.toTypedArray()) { _, which ->
+                when (actions[which]) {
+                    "Screen logs" -> showScreenSelector(device, null)
+                    "Edit device" -> startActivity(Intent(this, AddEditDeviceActivity::class.java).apply { putExtra("device_id", device.id) })
+                }
+            }
+            .setNegativeButton("Close", null)
+            .show()
     }
 
     private fun formatUptime(s: Long): String {
