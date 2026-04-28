@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -308,10 +309,11 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        btnRow.addView(makeBtn("SCREEN LOGS", "#7B7BFF") {
+        val screenLogsBtn = makeBtn("SCREEN LOGS", "#7B7BFF") {
             if (device.lastStatus != "on") { Toast.makeText(this, "Offline", Toast.LENGTH_SHORT).show(); return@makeBtn }
-            showScreenSelector(device)
-        })
+            showScreenSelector(device, screenLogsBtn)
+        }
+        btnRow.addView(screenLogsBtn)
 
         btnRow.addView(makeBtn("EDIT", "#555566") {
             startActivity(Intent(this, AddEditDeviceActivity::class.java).apply { putExtra("device_id", device.id) })
@@ -485,26 +487,43 @@ class MainActivity : AppCompatActivity() {
 
     private fun makeBtn(label: String, color: String, onClick: () -> Unit): TextView {
         return TextView(this).apply {
-            text = label; textSize = 11f
-            setTextColor(Color.parseColor(color)); letterSpacing = 0.15f
-            setPadding(0, 8, 32, 8)
+            text = label; textSize = 12f; letterSpacing = 0.08f
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
+            setPadding(30, 18, 30, 18)
+            background = GradientDrawable().apply {
+                setColor(Color.parseColor(color))
+                cornerRadius = 32f
+            }
             isClickable = true; isFocusable = true
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                rightMargin = 12
+            }
             setOnClickListener { onClick() }
         }
     }
 
-    private fun showScreenSelector(device: Device) {
+    private fun showScreenSelector(device: Device, button: TextView) {
+        val originalText = button.text.toString()
+        button.isEnabled = false
+        button.alpha = 0.6f
+        button.text = "Loading..."
+
         thread {
             val screens = Network.listScreens(device)
             runOnUiThread {
+                button.isEnabled = true
+                button.alpha = 1f
+                button.text = originalText
+
                 if (screens.isEmpty()) {
-                    showScreenNameDialog(device, "")
+                    showScreenNameDialog(device, "", button)
                 } else {
                     val items = screens.map { it.substringAfter('.', it) }.toTypedArray()
                     AlertDialog.Builder(this)
                         .setTitle("Select an active screen")
-                        .setItems(items) { _, which -> showScreenLog(device, screens[which]) }
-                        .setPositiveButton("Enter name") { _, _ -> showScreenNameDialog(device, "") }
+                        .setItems(items) { _, which -> showScreenLog(device, screens[which], button) }
+                        .setPositiveButton("Enter name") { _, _ -> showScreenNameDialog(device, "", button) }
                         .setNegativeButton("Cancel", null)
                         .show()
                 }
@@ -512,7 +531,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showScreenNameDialog(device: Device, prefill: String) {
+    private fun showScreenNameDialog(device: Device, prefill: String, button: TextView?) {
         val input = EditText(this).apply {
             setText(prefill)
             hint = "screen name"
@@ -527,16 +546,28 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this, "Enter a screen name", Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
-                showScreenLog(device, screenName)
+                showScreenLog(device, screenName, button)
             }
             .setNegativeButton("Cancel", null)
             .show()
     }
 
-    private fun showScreenLog(device: Device, screenName: String) {
+    private fun showScreenLog(device: Device, screenName: String, button: TextView?) {
+        val originalText = button?.text?.toString()
+        button?.apply {
+            isEnabled = false
+            alpha = 0.6f
+            text = "Loading logs..."
+        }
+
         thread {
             val logText = Network.getScreenLog(device, screenName)
             runOnUiThread {
+                button?.apply {
+                    isEnabled = true
+                    alpha = 1f
+                    text = originalText ?: text
+                }
                 if (logText == null) {
                     Toast.makeText(this, "Screen not found or log unavailable", Toast.LENGTH_LONG).show()
                     return@runOnUiThread
