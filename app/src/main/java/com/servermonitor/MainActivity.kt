@@ -497,10 +497,12 @@ class MainActivity : AppCompatActivity() {
                     text = originalText
                 }
 
+                Toast.makeText(this@MainActivity, "Found ${screens.size} active screens", Toast.LENGTH_SHORT).show()
+
                 if (screens.isEmpty()) {
                     showScreenNameDialog(device, "", button)
                 } else {
-                    val items = screens.map { it.substringAfter('.', it) }.toTypedArray()
+                    val items = screens.toTypedArray()  // Show full screen names
                     AlertDialog.Builder(this)
                         .setTitle("Select an active screen")
                         .setItems(items) { _, which -> showScreenLog(device, screens[which], button) }
@@ -541,6 +543,8 @@ class MainActivity : AppCompatActivity() {
             text = "Loading logs..."
         }
 
+        Toast.makeText(this, "Fetching logs for $screenName", Toast.LENGTH_SHORT).show()
+
         thread {
             val logText = Network.getScreenLog(device, screenName)
             runOnUiThread {
@@ -561,11 +565,13 @@ class MainActivity : AppCompatActivity() {
                     setTextIsSelectable(true)
                 }
                 val scroll = ScrollView(this).apply { addView(logView) }
-                AlertDialog.Builder(this)
+                val dialog = AlertDialog.Builder(this)
                     .setTitle("Logs: $screenName")
                     .setView(scroll)
                     .setPositiveButton("Close", null)
                     .show()
+                // Scroll to bottom after dialog is shown
+                scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
             }
         }
     }

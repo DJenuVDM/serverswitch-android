@@ -67,16 +67,30 @@ object Network {
                 .addHeader("X-Token", device.token)
                 .build()
             val resp = client.newCall(req).execute()
-            if (!resp.isSuccessful) return emptyList()
-            val j = JSONObject(resp.body?.string() ?: return emptyList())
+            Log.d("Network", "Screens response code: ${resp.code}")
+            if (!resp.isSuccessful) {
+                Log.d("Network", "Screens request failed")
+                return emptyList()
+            }
+            val body = resp.body?.string() ?: ""
+            Log.d("Network", "Screens response body: $body")
+            val j = JSONObject(body)
+            if (j.has("error")) {
+                Log.d("Network", "Screens error: ${j.getString("error")}")
+                return emptyList()
+            }
             if (j.has("screens")) {
                 val arr = j.getJSONArray("screens")
-                (0 until arr.length()).map { arr.getString(it) }
+                val screens = (0 until arr.length()).map { arr.getString(it) }
+                Log.d("Network", "Screens: $screens")
+                return screens
             } else {
-                emptyList()
+                Log.d("Network", "No screens key in response")
+                return emptyList()
             }
         } catch (e: Exception) {
-            emptyList()
+            Log.d("Network", "Screens exception: ${e.message}")
+            return emptyList()
         }
     }
 
@@ -88,11 +102,23 @@ object Network {
                 .addHeader("X-Token", device.token)
                 .build()
             val resp = client.newCall(req).execute()
-            if (!resp.isSuccessful) return null
-            val j = JSONObject(resp.body?.string() ?: return null)
-            if (j.has("error")) null else j.optString("log", "")
+            Log.d("Network", "Screen log response code: ${resp.code}")
+            if (!resp.isSuccessful) {
+                Log.d("Network", "Screen log request failed")
+                return null
+            }
+            val body = resp.body?.string() ?: ""
+            Log.d("Network", "Screen log response body: $body")
+            val j = JSONObject(body)
+            if (j.has("error")) {
+                Log.d("Network", "Screen log error: ${j.getString("error")}")
+                return null
+            } else {
+                return j.optString("log", "")
+            }
         } catch (e: Exception) {
-            null
+            Log.d("Network", "Screen log exception: ${e.message}")
+            return null
         }
     }
 
