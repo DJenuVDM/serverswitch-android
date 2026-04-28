@@ -268,8 +268,9 @@ class MainActivity : AppCompatActivity() {
                             if (postAod != null) {
                                 val remainingDelay = (device.postShutdownDelaySeconds * 1000L) - 5000L
                                 if (remainingDelay > 0) Thread.sleep(remainingDelay)
-                                Network.wakeViaScript(postAod, device.postShutdownScript)
-                                android.util.Log.d("ServerSwitch", "Post-shutdown script '${device.postShutdownScript}' ran for ${device.name}")
+                                val scriptArgs = device.postShutdownScriptArgs.split("\\s+".toRegex()).filter { it.isNotEmpty() }
+                                Network.wakeViaScript(postAod, device.postShutdownScript, scriptArgs)
+                                android.util.Log.d("ServerSwitch", "Post-shutdown script '${device.postShutdownScript}' ran for ${device.name} with ${scriptArgs.size} args")
                             }
                         }
                         DeviceStore.updateDeviceStatus(this, device.id, Network.pollDevice(device))

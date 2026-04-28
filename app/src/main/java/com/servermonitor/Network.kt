@@ -80,10 +80,14 @@ object Network {
         } catch (e: Exception) { false }
     }
 
-    fun wakeViaScript(aod: Aod, scriptName: String): Boolean = try {
+    fun wakeViaScript(aod: Aod, scriptName: String, args: List<String> = emptyList(), env: Map<String, String> = emptyMap()): Boolean = try {
+        val body = JSONObject().apply {
+            if (args.isNotEmpty()) put("args", org.json.JSONArray(args))
+            if (env.isNotEmpty()) put("env", JSONObject(env))
+        }.toString().toRequestBody("application/json".toMediaType())
         val req = Request.Builder()
             .url("http://${aod.ip}:${aod.port}/wake/script/$scriptName")
-            .post("{}".toRequestBody("application/json".toMediaType()))
+            .post(body)
             .addHeader("X-Token", aod.token).build()
         client.newCall(req).execute().isSuccessful
     } catch (e: Exception) { false }

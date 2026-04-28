@@ -136,6 +136,19 @@ class AddEditDeviceActivity : AppCompatActivity() {
             ).apply { bottomMargin = 40 }
         })
 
+        addLabel("Script arguments (optional)")
+        val scriptArgsField = addField(
+            "e.g. arg1 arg2 (space-separated)",
+            existing?.postShutdownScriptArgs ?: ""
+        )
+        container.addView(TextView(this).apply {
+            text = "Pass arguments to the script. Leave empty if your script doesn't need arguments."
+            textSize = 11f; setTextColor(Color.parseColor("#2A2A3E")); setPadding(0, 4, 0, 0)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = 40 }
+        })
+
         // ── Save button ───────────────────────────────────────────────────────
         container.addView(TextView(this).apply {
             text = if (existing != null) "SAVE CHANGES" else "ADD DEVICE"
@@ -155,6 +168,7 @@ class AddEditDeviceActivity : AppCompatActivity() {
                 val token = tokenField.text.toString().trim()
                 val script = scriptField.text.toString().trim()
                 val delay = delayField.text.toString().toIntOrNull() ?: 30
+                val scriptArgs = scriptArgsField.text.toString().trim()
 
                 if (name.isEmpty() || ip.isEmpty() || token.isEmpty()) {
                     Toast.makeText(this@AddEditDeviceActivity, "Fill in all required fields", Toast.LENGTH_SHORT).show()
@@ -166,13 +180,15 @@ class AddEditDeviceActivity : AppCompatActivity() {
                     val idx = devices.indexOfFirst { it.id == editingId }
                     if (idx >= 0) devices[idx] = devices[idx].copy(
                         name = name, ip = ip, mac = mac, port = port, token = token,
-                        postShutdownScript = script, postShutdownDelaySeconds = delay
+                        postShutdownScript = script, postShutdownDelaySeconds = delay,
+                        postShutdownScriptArgs = scriptArgs
                     )
                 } else {
                     devices.add(Device(
                         id = DeviceStore.newId(), name = name, ip = ip, mac = mac,
                         port = port, token = token,
-                        postShutdownScript = script, postShutdownDelaySeconds = delay
+                        postShutdownScript = script, postShutdownDelaySeconds = delay,
+                        postShutdownScriptArgs = scriptArgs
                     ))
                 }
                 DeviceStore.saveDevices(this@AddEditDeviceActivity, devices)

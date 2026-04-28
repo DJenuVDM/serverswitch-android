@@ -14,7 +14,8 @@ data class Device(
     var lastStatus: String = "unknown",
     // Post-shutdown script: script name on the AOD to run after shutdown
     val postShutdownScript: String = "",       // script name (empty = none)
-    val postShutdownDelaySeconds: Int = 30     // how long to wait after shutdown before running it
+    val postShutdownDelaySeconds: Int = 30,    // how long to wait after shutdown before running it
+    val postShutdownScriptArgs: String = ""    // arguments to pass to the script (space-separated or JSON)
 )
 
 data class Aod(
@@ -47,7 +48,8 @@ object DeviceStore {
                 mac = o.optString("mac", ""),
                 lastStatus = o.optString("lastStatus", "unknown"),
                 postShutdownScript = o.optString("postShutdownScript", ""),
-                postShutdownDelaySeconds = o.optInt("postShutdownDelaySeconds", 30)
+                postShutdownDelaySeconds = o.optInt("postShutdownDelaySeconds", 30),
+                postShutdownScriptArgs = o.optString("postShutdownScriptArgs", "")
             )
         }.toMutableList()
     }
@@ -61,6 +63,7 @@ object DeviceStore {
                 put("lastStatus", d.lastStatus)
                 put("postShutdownScript", d.postShutdownScript)
                 put("postShutdownDelaySeconds", d.postShutdownDelaySeconds)
+                put("postShutdownScriptArgs", d.postShutdownScriptArgs)
             })
         }
         prefs(context).edit().putString(KEY_DEVICES, arr.toString()).apply()
