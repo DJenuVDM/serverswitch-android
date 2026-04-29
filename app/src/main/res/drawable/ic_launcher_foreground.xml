@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Rack outline border -->
+    <path
+        android:pathData="M22,24 L86,24 L86,84 L22,84 Z"
+        android:strokeColor="#4A5E85"
+        android:strokeWidth="1.5"
+        android:fillColor="#00000000" />
+
+    <!-- Server unit 1 -->
+    <path
+        android:pathData="M26,28 Q27.6,28 27.6,29.6 L27.6,44.4 Q27.6,46 26,46 L82,46 Q83.6,46 83.6,44.4 L83.6,29.6 Q83.6,28 82,28 Z"
+        android:fillColor="#2E3D5C" />
+    <!-- Unit 1 text bars -->
+    <path
+        android:pathData="M32,34 L62,34"
+        android:strokeColor="#4A5E85"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M32,39 L50,39"
+        android:strokeColor="#3A4E72"
+        android:strokeWidth="2"
+        android:strokeLineCap="round" />
+    <!-- Unit 1 LED green -->
+    <path
+        android:pathData="M76,37 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0"
+        android:fillColor="#22C55E" />
+    <path
+        android:pathData="M76,37 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0"
+        android:fillColor="#86EFAC" />
+
+    <!-- Divider -->
+    <path
+        android:pathData="M22,47.5 L86,47.5"
+        android:strokeColor="#3A4A6A"
+        android:strokeWidth="0.8"
+        android:fillColor="#00000000" />
+
+    <!-- Server unit 2 -->
+    <path
+        android:pathData="M26,49 Q27.6,49 27.6,50.6 L27.6,65.4 Q27.6,67 26,67 L82,67 Q83.6,67 83.6,65.4 L83.6,50.6 Q83.6,49 82,49 Z"
+        android:fillColor="#2E3D5C" />
+    <!-- Unit 2 text bars -->
+    <path
+        android:pathData="M32,55 L56,55"
+        android:strokeColor="#4A5E85"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M32,60 L44,60"
+        android:strokeColor="#3A4E72"
+        android:strokeWidth="2"
+        android:strokeLineCap="round" />
+    <!-- Unit 2 LED green -->
+    <path
+        android:pathData="M76,58 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0"
+        android:fillColor="#22C55E" />
+    <path
+        android:pathData="M76,58 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0"
+        android:fillColor="#86EFAC" />
+
+    <!-- Divider -->
+    <path
+        android:pathData="M22,68.5 L86,68.5"
+        android:strokeColor="#3A4A6A"
+        android:strokeWidth="0.8"
+        android:fillColor="#00000000" />
+
+    <!-- Server unit 3 -->
+    <path
+        android:pathData="M26,70 Q27.6,70 27.6,71.6 L27.6,82.4 Q27.6,84 26,84 L82,84 Q83.6,84 83.6,82.4 L83.6,71.6 Q83.6,70 82,70 Z"
+        android:fillColor="#2E3D5C" />
+    <!-- Unit 3 text bars -->
+    <path
+        android:pathData="M32,75 L50,75"
+        android:strokeColor="#4A5E85"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M32,80 L40,80"
+        android:strokeColor="#3A4E72"
+        android:strokeWidth="2"
+        android:strokeLineCap="round" />
+    <!-- Unit 3 LED blue (standby) -->
+    <path
+        android:pathData="M76,77 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0"
+        android:fillColor="#3B82F6" />
+    <path
+        android:pathData="M76,77 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0"
+        android:fillColor="#93C5FD" />
+
+</vector>
