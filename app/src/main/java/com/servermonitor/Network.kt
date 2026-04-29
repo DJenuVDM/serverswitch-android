@@ -94,6 +94,24 @@ object Network {
         }
     }
 
+    fun sendScreenCommand(device: Device, screenName: String, command: String): Boolean {
+        return try {
+            val encodedName = URLEncoder.encode(screenName, "UTF-8")
+            val body = JSONObject().apply {
+                put("command", command)
+            }.toString().toRequestBody("application/json".toMediaType())
+            val req = Request.Builder()
+                .url("http://${device.ip}:${device.port}/screens/$encodedName/command")
+                .post(body)
+                .addHeader("X-Token", device.token)
+                .build()
+            client.newCall(req).execute().isSuccessful
+        } catch (e: Exception) {
+            Log.d("Network", "Screen command exception: ${e.message}")
+            false
+        }
+    }
+
     fun getScreenLog(device: Device, screenName: String): String? {
         return try {
             val encodedName = URLEncoder.encode(screenName, "UTF-8")
@@ -118,7 +136,27 @@ object Network {
             }
         } catch (e: Exception) {
             Log.d("Network", "Screen log exception: ${e.message}")
-            return null
+            null
+        }
+    }
+
+    fun tailScreenLog(device: Device, screenName: String, offset: Int): Pair<List<String>, Int>? {
+        return try {
+            val encodedName = URLEncoder.encode(screenName, "UTF-8")
+            val req = Request.Builder()
+                .url("http://${device.ip}:${device.port}/screens/$encodedName/log/tail?offset=$offset")
+                .addHeader("X-Token", device.token)
+                .build()
+            val resp = client.newCall(req).execute()
+            if (!resp.isSuccessful) return null
+            val j = JSONObject(resp.body?.string() ?: return null)
+            if (j.has("error")) return null
+            val arr = j.getJSONArray("new_lines")
+            val lines = (0 until arr.length()).map { arr.getString(it) }
+            Pair(lines, j.getInt("next_offset"))
+        } catch (e: Exception) {
+            Log.d("Network", "Screen tail exception: ${e.message}")
+            null
         }
     }
 

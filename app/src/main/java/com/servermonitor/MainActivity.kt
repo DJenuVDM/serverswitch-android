@@ -12,6 +12,8 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import kotlin.concurrent.thread
+import com.servermonitor.DeviceStore
+import com.servermonitor.Network
 
 class MainActivity : AppCompatActivity() {
 
@@ -568,7 +570,10 @@ class MainActivity : AppCompatActivity() {
                 val dialog = AlertDialog.Builder(this)
                     .setTitle("Logs: $screenName")
                     .setView(scroll)
-                    .setPositiveButton("Close", null)
+                    .setPositiveButton("Send Command") { _, _ ->
+                        showCommandDialog(device, screenName)
+                    }
+                    .setNegativeButton("Close", null)
                     .show()
                 // Scroll to bottom after dialog is shown
                 scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
@@ -582,7 +587,7 @@ class MainActivity : AppCompatActivity() {
             .setTitle(device.name)
             .setItems(actions.toTypedArray()) { _, which ->
                 when (actions[which]) {
-                    "Screen logs" -> showScreenSelector(device, null)
+                    "Screen logs" -> startActivity(Intent(this, ScreenActivity::class.java).apply { putExtra("device", device) })
                     "Edit device" -> startActivity(Intent(this, AddEditDeviceActivity::class.java).apply { putExtra("device_id", device.id) })
                 }
             }
@@ -590,8 +595,32 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun formatUptime(s: Long): String {
-        val d = s / 86400; val h = (s % 86400) / 3600; val m = (s % 3600) / 60
-        return buildString { if (d > 0) append("${d}d "); if (h > 0) append("${h}h "); append("${m}m") }
+    private fun showCommandDialog(device: Device, screenName: String) {
+        val input = EditText(this).apply {
+            hint = "Enter command to send to $screenName"
+            setTextColor(Color.parseColor("#F0F0F5"))
+            setHintTextColor(Color.parseColor("#888888"))
+        }
+        
+        AlertDialog.Builder(this)
+            .setTitle("Send Command")
+            .setView(input)
+            .setPositiveButton("Send") { _, _ ->
+                val command = input.text.toString().trim()
+                if (command.isNotEmpty()) {
+                    thread {
+                        val success = Network.sendScreenCommand(device, screenName, command)
+                        runOnUiThread {
+                            if (success) {
+                                Toast.makeText(this, "Command sent", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(this, "Failed to send command", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 }

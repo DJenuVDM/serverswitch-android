@@ -3,6 +3,7 @@ package com.servermonitor
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.Serializable
 
 data class Device(
     val id: String,
@@ -16,7 +17,7 @@ data class Device(
     val postShutdownScript: String = "",       // script name (empty = none)
     val postShutdownDelaySeconds: Int = 30,    // how long to wait after shutdown before running it
     val postShutdownScriptArgs: String = ""    // arguments to pass to the script (space-separated or JSON)
-)
+) : Serializable
 
 data class Aod(
     val id: String,
