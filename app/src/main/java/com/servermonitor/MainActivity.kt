@@ -582,12 +582,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showDeviceActions(device: Device, aod: Aod?) {
-        val actions = mutableListOf("Screen logs", "Edit device")
+        val actions = mutableListOf("Screen logs", "Run script", "Edit device")
         AlertDialog.Builder(this)
             .setTitle(device.name)
             .setItems(actions.toTypedArray()) { _, which ->
                 when (actions[which]) {
                     "Screen logs" -> startActivity(Intent(this, ScreenActivity::class.java).apply { putExtra("device", device) })
+                    "Run script"  -> startActivity(Intent(this, RunScriptActivity::class.java).apply { putExtra("device", device) })
                     "Edit device" -> startActivity(Intent(this, AddEditDeviceActivity::class.java).apply { putExtra("device_id", device.id) })
                 }
             }

@@ -20,6 +20,7 @@
         <activity android:name=".AddEditAodActivity" android:exported="false" />
         <activity android:name=".ScreenActivity" android:exported="false" />
         <activity android:name=".LogActivity" android:exported="false" />
+        <activity android:name=".RunScriptActivity" android:exported="false" />
 
     </application>
 </manifest>
